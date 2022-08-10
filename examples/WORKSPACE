@@ -1,0 +1,20 @@
+workspace(name = "linux_kernel_headers_examples")
+
+local_repository(
+    name = "linux_kernel_headers",
+    path = "..",
+)
+
+load("@linux_kernel_headers//:repositories.bzl", "linux_kernel_headers_dependencies")
+
+linux_kernel_headers_dependencies()
+
+
+load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
+
+# Don't use preinstalled tools to ensure builds are as hermetic as possible
+rules_foreign_cc_dependencies(register_preinstalled_tools = False)
+
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+
+bazel_skylib_workspace()
