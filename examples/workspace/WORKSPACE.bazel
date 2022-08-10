@@ -1,8 +1,8 @@
-workspace(name = "linux_kernel_headers_examples")
+workspace(name = "linux_kernel_headers_example")
 
 local_repository(
     name = "linux_kernel_headers",
-    path = "..",
+    path = "../..",
 )
 
 load("@linux_kernel_headers//:repositories.bzl", "linux_kernel_headers_dependencies")

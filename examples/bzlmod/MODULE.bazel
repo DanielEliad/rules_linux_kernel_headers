@@ -1,0 +1,17 @@
+module(
+    name = "linux_kernel_headers_example",
+    version = "0.0.1",
+    compatibility_level = 1,
+)
+
+bazel_dep(name = "linux_kernel_headers", version = "0.0.1")
+local_path_override(module_name = "linux_kernel_headers", path = "../../")
+
+linux_kernel_headers = use_extension("@linux_kernel_headers//:repositories.bzl", "extension")
+# You can add a new kernel that the original module did not know of
+linux_kernel_headers.kernel(
+    version = "4.14.154",
+    sha256 = "7a5d8f949602e2a62d94843370c8384b472af0155f122abdf0bb26b506909120",
+    url="https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.14.154.tar.gz"
+)
+[use_repo(linux_kernel_headers, "kernel_headers_" + v) for v in ["4.14.151", "4.14.153", "4.14.159", "4.14.154"]]

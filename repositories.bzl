@@ -1,28 +1,55 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
+def download_kernel_sources(version, sha256, url = ""):
+    if len(url) == 0:
+        major = version[0]
+        url = "https://cdn.kernel.org/pub/linux/kernel/v" + major + ".x/linux-" + version + ".tar.gz"
+    http_archive(
+        name = "kernel_headers_" + version,
+        build_file = "@linux_kernel_headers//:BUILD.kernel",
+        patches = [
+            "@linux_kernel_headers//:kernel_install_hdr_patch",
+        ],
+        sha256 = sha256,
+        strip_prefix = "linux-" + version + "/",
+        urls = [url],
+    )
+
+def module_extension_impl(ctx):
+    # for each module that needs us:
+    versions = []
+    for mod in ctx.modules:
+        for kernel in mod.tags.kernel:
+            download_kernel_sources(
+                version = kernel.version,
+                sha256 = kernel.sha256,
+                url = kernel.url,
+            )
+
+kernel_version = tag_class(
+    attrs = {
+        "version": attr.string(mandatory = True),
+        "sha256": attr.string(mandatory = True),
+        "url": attr.string(),
+    },
+)
+extension = module_extension(
+    implementation = module_extension_impl,
+    tag_classes = {"kernel": kernel_version},
+)
+
 # buildifier: disable=unnamed-macro
 def linux_kernel_headers_dependencies(
-        kernel_version = "4.14.151"):
+        kernel_version = "4.14.151",
+        kernel_sha256 = "9b481473b29e63b332ef3d62c08462489ccfcd12638b1279c5aba81065002132"):
     """
     Call this function from the WORKSPACE file to initialize linux_kernel_headers dependencies
 
     Args:
         kernel_version: The kernel version
     """
-    kernel_major = kernel_version[0]
-
-    maybe(
-        http_archive,
-        name = "kernel_headers",
-        build_file = "@linux_kernel_headers//:BUILD.kernel",
-        patches = [
-            "@linux_kernel_headers//:kernel_install_hdr_patch",
-        ],
-        sha256 = "9b481473b29e63b332ef3d62c08462489ccfcd12638b1279c5aba81065002132",
-        strip_prefix = "linux-" + kernel_version + "/",
-        urls = ["https://cdn.kernel.org/pub/linux/kernel/v" + kernel_major + ".x/linux-" + kernel_version + ".tar.gz"],
-    )
+    download_kernel_sources(version = kernel_version, sha256 = kernel_sha256)
 
     maybe(
         http_archive,
